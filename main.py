@@ -20,9 +20,9 @@ def argument():
     # data source params
     parser.add_argument('--dataname', type=str, default='cora', help='Name of dataset.')
     # cuda params
-    parser.add_argument('--gpu', type=int, default=-1, help='GPU index. Default: -1, using CPU.')
+    parser.add_argument('--gpu', type=int, default=0, help='GPU index. Default: -1, using CPU.')
     # training params
-    parser.add_argument('--epochs', type=int, default=200, help='Training epochs.')
+    parser.add_argument('--epochs', type=int, default=2000, help='Training epochs.')
     parser.add_argument('--early_stopping', type=int, default=200, help='Patient epochs to wait before early stopping.')
     parser.add_argument('--lr', type=float, default=0.01, help='Learning rate.')
     parser.add_argument('--weight_decay', type=float, default=5e-4, help='L2 reg.')
@@ -39,6 +39,8 @@ def argument():
     parser.add_argument('--tem', type=float, default=0.5, help='Sharpening temperature')
     parser.add_argument('--lam', type=float, default=1., help='Coefficient of consistency regularization')
     parser.add_argument('--use_bn', action='store_true', default=False, help='Using Batch Normalization')
+    parser.add_argument('--is_ori', action='store_true', default=True)
+
 
     args = parser.parse_args()
     
@@ -105,7 +107,7 @@ if __name__ == '__main__':
     
     model = GRAND(n_features, args.hid_dim, n_classes, args.sample, args.order,
                   args.dropnode_rate, args.input_droprate, 
-                  args.hidden_droprate, args.use_bn)
+                  args.hidden_droprate, args.use_bn, args.is_ori)
 
     model = model.to(args.device)
     graph = graph.to(args.device)
@@ -153,8 +155,8 @@ if __name__ == '__main__':
             acc_val = th.sum(val_logits[val_idx].argmax(dim=1) == labels[val_idx]).item() / len(val_idx)
 
             # Print out performance
-            print("In epoch {}, Train Acc: {:.4f} | Train Loss: {:.4f} ,Val Acc: {:.4f} | Val Loss: {:.4f}".
-              format(epoch, acc_train, loss_train.item(), acc_val, loss_val.item()))
+            print("In epoch {}, Train Acc: {:.4f} | Train Loss: {:.4f} ,Val Acc: {:.4f} | Val Loss: {:.4f} | Con Loss: {:.4f}".
+              format(epoch, acc_train, loss_train.item(), acc_val, loss_val.item(), loss_consis.item()))
 
             # set early stopping counter
             if loss_val < loss_best or acc_val > acc_best:
